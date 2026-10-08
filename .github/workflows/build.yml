@@ -630,6 +630,22 @@ jobs:
             echo "KSU_LATEST_COMMIT_DATE=未知" >> $GITHUB_ENV
           fi
 
+      - name: 修复内核 include 路径兼容
+        if: inputs.ksu_mode != '禁用KSU'
+        working-directory: ${{ env.KERNEL_ROOT }}
+        run: |
+          KSU_DIR=common/drivers/kernelsu
+          [ -d "$KSU_DIR" ] || KSU_DIR=drivers/kernelsu
+          if [ -d "$KSU_DIR/include" ]; then
+            for f in "$KSU_DIR"/include/*.h; do
+              b=$(basename "$f")
+              [ -e "$KSU_DIR/$b" ] || ln -sf "include/$b" "$KSU_DIR/$b"
+            done
+            echo "[+] include 头文件已链接到 kernelsu 根目录"
+          else
+            echo "未找到 $KSU_DIR/include，跳过"
+          fi
+
       - name: 配置 SukiSU 管理器信息
         if: (inputs.ksu_variant == 'SukiSU' || inputs.ksu_variant == 'SukiSU(40726)' || inputs.ksu_variant == 'SukiSU(40548)') && inputs.ksu_mode != '禁用KSU'
         working-directory: ${{ env.KERNEL_ROOT }}/KernelSU
